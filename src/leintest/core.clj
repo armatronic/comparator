@@ -5,7 +5,6 @@
 (require '(clojure [string :as s]))
 (require 'clojure.pprint)
 (use '[clojure.java.io :only (reader)])
-;(require 'clojure.java.io :as io)
 
 (defn rand2-nth
   "Returns 2 different random values out of the list."
@@ -50,22 +49,12 @@
 (defn get-input-for-line
   "Gets a valid line number selection"
   [item-list]
-;  (query-for-input "Enter a decision")
   (loop [input (query-for-input "Enter a decision")]
-;  (loop [input (read-line)]
     (if (valid-selection? input item-list)
       (Integer. input)
-;      (recur (read-line "Not valid, enter a decision"))
       (recur (query-for-input "Not valid, enter a decision"))
       )
     )
-;  (if-let [v (valid-selection? (read-line) item-list)]
-;    v
-;    (do
-;      (println "Invalid")
-;      (recur [item-list])
-;      )
-;    )
   )
 
 (defn -main
@@ -73,37 +62,19 @@
   [& args]
   ;; work around dangerous default behaviour in Clojure
   (alter-var-root #'*read-eval* (constantly false))
-  ; Read a filename from stdin
-  ; Offer me a selection of two DIFFERENT random items.
+
+  ; Offer me a selection of two DIFFERENT random selections from this file.
   (with-open [rdr (reader "./.gitignore")]
     (let [item-seq (line-seq rdr),
           rands    (rand2-nth item-seq),
           output   (map-indexed (fn [i line] [(+ 1 i) line]) rands)]
+      ; Output the line
       (doseq [line output]
         (println (str (first line) ": " (second line)))
         )
       ; Now do something with the entry.
       ; Store an entry for my choice against whichever I didn't choose.
       (println (str "You chose \"" (second (nth output (- (get-input-for-line output) 1))) "\""))
-
       )
     )
-
-;  (loop [input (read-line)]
-;    (when-not (= ":done" input)
-;      (println (str "You entered: >>" input "<<"))
-;      (recur (read-line))))
-
-  ; After that, show me the choice I made.
-;  (let [rand1 (rand-nth (keys item-map))])
-;  (clojure.pprint/pprint
-;    (item-map (rand-nth (keys item-map)))
-;    )
-
-;  (let [item-map {}]
-;    (doseq [line (line-seq (java.io.BufferedReader. *in*))]
-;      (assoc item-map line {}))
-;    (print item-map)
-;  )
-  ; For now, read from stdin, but later take a command line param.
-)
+  )
