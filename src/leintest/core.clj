@@ -42,6 +42,7 @@
   )
 
 (defn query-for-input [prompt]
+  "Prompts for input from stdin"
   (println prompt)
   (read-line)
   )
