@@ -44,15 +44,28 @@
   (alter-var-root #'*read-eval* (constantly false))
   ; Offer me a selection of two DIFFERENT random selections from this file.
   (with-open [rdr (reader "./.gitignore")]
-    (let [comparator (c/new-comparator (line-seq rdr))
-          output     (map-indexed (fn [i line] [(+ 1 i) line]) (c/get-unchosen-pair comparator))]
-      ; Output the line (intersperse with map)
-      (doseq [line output]
-        (println (str (first line) ": " (second line)))
+    ; Keep going until I say stop, or until all are chosen
+    (loop [comparator (c/new-comparator (line-seq rdr))]
+      ; Get a pair out of the
+      (let [pair   (c/get-unchosen-pair comparator)
+            output (map-indexed (fn [i line] {:index (+ 1 i), :line line}) pair)]
+        ; Output the line (intersperse with map)
+        (doseq [line output]
+          (println (str (line :index) ": " (line :line)))
+          )
+        ; Now do something with the entry.
+        ; Store an entry for my choice against whichever I didn't choose.
+        ; Selection will either be 0 or 1
+        (let [selection     (get-input-for-line output)
+              selected-line (nth output (- selection 1))
+              other-line    (first (concat (take (- selection 1) output) (nthrest output selection)))
+              ]
+          (println (str "You chose \"" (selected-line :line) "\" (not \"" (other-line :line) "\")"))
+          )
+        ; Do you want to choose again?
+;        (recur [(c/add-score (first )])])
         )
-      ; Now do something with the entry.
-      ; Store an entry for my choice against whichever I didn't choose.
-      (println (str "You chose \"" (second (nth output (- (get-input-for-line output) 1))) "\""))
       )
+;    (print comparator)
     )
   )
