@@ -97,7 +97,12 @@
   ; Get total choices remaining for all options, then divide that by 2
   ; (because each option unused will have a pair)
   (/
-    (apply + (map #(get-num-choices-remaining-for comparator %) (comparator :options)))
+    (apply +
+      (map
+        #(get-num-choices-remaining-for comparator %)
+        (comparator :options)
+        )
+      )
     2)
   )
 
@@ -132,13 +137,41 @@
         ]
       #{x (rand-nth (vec choices))}
     )
-;  (loop [x (rand-nth (vec (comparator :options)))]
-;    (let [choices (get-choices-remaining-for comparator x)]
-;      (if (> (count choices) 0)
-;        ; Choose a random unused value
-;        #{x (rand-nth (vec choices))}
-;        (recur (rand-nth (vec (comparator :options))))
-;        )
-;      )
-;    )
+  )
+
+(defn get-score-for
+  "Gets average score for an item in the comparator"
+  [comparator x]
+  (let [scores      (vals (get-in comparator [:scores x]))
+        score-total (apply + scores)
+        score-count (count scores)]
+    (if (= 0 score-count)
+      nil
+      (/ score-total score-count)
+      )
+    )
+  )
+
+(defn- get-score-list
+  [comparator]
+  (for [option (vec (comparator :options))]
+    [option (get-score-for comparator option)]
+    )
+  )
+
+(defn- score-comparator
+  [x y]
+  (if (nil? x)
+    1
+    (if (nil? y)
+      -1
+      (- y x)
+      )
+    )
+  )
+
+(defn get-scores
+  "Gets a list of all average scores in the comparator, highest ranked first, unranked at bottom"
+  [comparator]
+  (sort-by second score-comparator (get-score-list comparator))
   )
