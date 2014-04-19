@@ -3,6 +3,7 @@
   (:gen-class)
   (:require [leintest.comparator :as c])
   (:use [clojure.java.io :only (reader)])
+;  (:use [clojure.pprint])
   )
 
 (defn valid-selection?
@@ -22,17 +23,44 @@
 
 (defn query-for-input [prompt]
   "Prompts for input from stdin"
-  (println prompt)
+  (print prompt)
   (read-line)
   )
 
+(defn- print-scores
+  "Outputs scores for this comparator"
+  [comparator]
+  (doseq [[item score] (c/get-scores comparator)]
+    (println (str item ": " score))
+    )
+  ; Return -1 to loop thru again
+  -1
+  )
+
 (defn get-input-for-line
-  "Gets a valid line number selection"
-  [item-list]
-  (loop [input (query-for-input "Enter a decision")]
+  "Gets a valid line number selection."
+  [item-list comparator]
+  (loop [input (query-for-input "Choose one: ")]
+    (when (= input "s")
+      (print-scores comparator)
+      )
+    (when (= input "?")
+      (println "?:    help")
+      (println "1, 2: a choice")
+      (println "s:    current scores")
+      (println "x:    exit")
+      )
     (if (valid-selection? input item-list)
       (Integer. input)
-      (recur (query-for-input "Not valid, enter a decision"))
+      ; Inputs:
+      ; 1, 2: a choice
+      ; s: current scores
+      ; x: exit
+      ; ?: help
+      (if (= input "x")
+        -1
+        (recur (query-for-input "Choose one: "))
+        )
       )
     )
   )
@@ -43,7 +71,7 @@
   ;; work around dangerous default behaviour in Clojure
   (alter-var-root #'*read-eval* (constantly false))
   ; Offer me a selection of two DIFFERENT random selections from this file.
-  (with-open [rdr (reader "./.gitignore")]
+  (with-open [rdr (reader "./SAMPLE")]
     ; Keep going until I say stop, or until all are chosen
     (loop [comparator (c/new-comparator (line-seq rdr))]
       ; Get a pair out of the
@@ -56,16 +84,25 @@
         ; Now do something with the entry.
         ; Store an entry for my choice against whichever I didn't choose.
         ; Selection will either be 0 or 1
-        (let [selection     (get-input-for-line output)
-              selected-line (nth output (- selection 1))
-              other-line    (first (concat (take (- selection 1) output) (nthrest output selection)))
-              ]
-          (println (str "You chose \"" (selected-line :line) "\" (not \"" (other-line :line) "\")"))
+        (let [selection (get-input-for-line output comparator)]
+          ; selection = -1: exit
+          (when-not (= selection -1)
+            (let [selected-line  (nth output (- selection 1))
+                  other-line     (first (concat (take (- selection 1) output) (nthrest output selection)))
+                  new-comparator (c/add-score comparator (selected-line :line) (other-line :line))]
+              (println (str "You chose \"" (selected-line :line) "\" (not \"" (other-line :line) "\")"))
+              ; Do you want to choose again?
+              (if (c/has-choices-remaining? new-comparator)
+                (recur new-comparator)
+                ; Output totals
+                (doseq [[item score] (c/get-scores comparator)]
+                  (println (str item ": " score))
+                  )
+                )
+              )
+            )
           )
-        ; Do you want to choose again?
-;        (recur [(c/add-score (first )])])
         )
       )
-;    (print comparator)
     )
   )
