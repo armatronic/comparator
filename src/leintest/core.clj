@@ -23,7 +23,7 @@
 
 (defn query-for-input [prompt]
   "Prompts for input from stdin"
-  (print prompt)
+  (println prompt)
   (read-line)
   )
 
@@ -50,6 +50,8 @@
       (println "s:    current scores")
       (println "x:    exit")
       )
+    (when (= input "x")
+      -1)
     (if (valid-selection? input item-list)
       (Integer. input)
       ; Inputs:
@@ -57,10 +59,7 @@
       ; s: current scores
       ; x: exit
       ; ?: help
-      (if (= input "x")
-        -1
-        (recur (query-for-input "Choose one: "))
-        )
+      (recur (query-for-input "Choose one: "))
       )
     )
   )
@@ -90,8 +89,6 @@
             (let [selected-line  (nth output (- selection 1))
                   other-line     (first (concat (take (- selection 1) output) (nthrest output selection)))
                   new-comparator (c/add-score comparator (selected-line :line) (other-line :line))]
-              (println (str "You chose \"" (selected-line :line) "\" (not \"" (other-line :line) "\")"))
-              ; Do you want to choose again?
               (if (c/has-choices-remaining? new-comparator)
                 (recur new-comparator)
                 ; Output totals
