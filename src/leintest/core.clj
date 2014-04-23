@@ -3,6 +3,7 @@
   (:gen-class)
   (:require [leintest.comparator :as c])
   (:use [clojure.java.io :only (reader)])
+  (:require [clj-getopts.core :as opt])
 ;  (:use [clojure.pprint])
   )
 
@@ -70,30 +71,33 @@
   ;; work around dangerous default behaviour in Clojure
   (alter-var-root #'*read-eval* (constantly false))
   ; Offer me a selection of two DIFFERENT random selections from this file.
-  (with-open [rdr (reader "./SAMPLE")]
-    ; Keep going until I say stop, or until all are chosen
-    (loop [comparator (c/new-comparator (line-seq rdr))]
-      ; Get a pair out of the
-      (let [pair   (c/get-unchosen-pair comparator)
-            output (map-indexed (fn [i line] {:index (+ 1 i), :line line}) pair)]
-        ; Output the line (intersperse with map)
-        (doseq [line output]
-          (println (str (line :index) ": " (line :line)))
-          )
-        ; Now do something with the entry.
-        ; Store an entry for my choice against whichever I didn't choose.
-        ; Selection will either be 0 or 1
-        (let [selection (get-input-for-line output comparator)]
-          ; selection = -1: exit
-          (when-not (= selection -1)
-            (let [selected-line  (nth output (- selection 1))
-                  other-line     (first (concat (take (- selection 1) output) (nthrest output selection)))
-                  new-comparator (c/add-score comparator (selected-line :line) (other-line :line))]
-              (if (c/has-choices-remaining? new-comparator)
-                (recur new-comparator)
-                ; Output totals
-                (doseq [[item score] (c/get-scores comparator)]
-                  (println (str item ": " score))
+  ; Where does file come from?
+  (let [options (opt/getopts (opt/options ":i:o:") *command-line-args*)]
+    (with-open [rdr (reader (options :i))]
+      ; Keep going until I say stop, or until all are chosen
+      (loop [comparator (c/new-comparator (line-seq rdr))]
+        ; Get a pair out of the
+        (let [pair   (c/get-unchosen-pair comparator)
+              output (map-indexed (fn [i line] {:index (+ 1 i), :line line}) pair)]
+          ; Output the line (intersperse with map)
+          (doseq [line output]
+            (println (str (line :index) ": " (line :line)))
+            )
+          ; Now do something with the entry.
+          ; Store an entry for my choice against whichever I didn't choose.
+          ; Selection will either be 0 or 1
+          (let [selection (get-input-for-line output comparator)]
+            ; selection = -1: exit
+            (when-not (= selection -1)
+              (let [selected-line  (nth output (- selection 1))
+                    other-line     (first (concat (take (- selection 1) output) (nthrest output selection)))
+                    new-comparator (c/add-score comparator (selected-line :line) (other-line :line))]
+                (if (c/has-choices-remaining? new-comparator)
+                  (recur new-comparator)
+                  ; Output totals - allow output to CSV perhaps
+                  (doseq [[item score] (c/get-scores comparator)]
+                    (println (str item ": " score))
+                    )
                   )
                 )
               )
