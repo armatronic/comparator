@@ -1,35 +1,9 @@
-# leintest
+# Comparator
 
-FIXME: description
-
-## Installation
-
-Download from http://example.com/FIXME.
+A comparator, written in Clojure. I wanted to understand the language somehow.
 
 ## Usage
 
-FIXME: explanation
+  lein run -i filename
 
-    $ java -jar leintest-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
-
-## License
-
-Copyright © 2014 FIXME
-
-Distributed under the Eclipse Public License, the same as Clojure.
+filename should be a list of items to compare, one item per line.
